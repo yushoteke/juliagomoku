@@ -10,7 +10,7 @@ end
 
 gomoku(m,n_in_row)=gomoku(zeros(Bool,m,m,2),m,1,false,n_in_row)
 valid_moves(G::gomoku)=findall(x->x==0,G.B[:,:,1]+G.B[:,:,2])
-current_perspective(G::gomoku)=G.B[:,:,2:-1:1]
+current_perspective(G::gomoku)=G.player_playing==1 ? G.B : G.B[:,:,2:-1:1]
 
 function print_board(G::gomoku)
     println("=========================")

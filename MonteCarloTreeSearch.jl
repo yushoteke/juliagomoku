@@ -26,7 +26,7 @@ function print_childs(node::MCTS_node)
     end
 end
 
-function sample_child(node::MCTS_node,c::Float64=1.0)
+function sample_child(node::MCTS_node,c=1.0)
     utilities = map(x->x.Q+c*x.p*sqrt(node.N/(1+x.N)),values(node.childs))
     val,ind=findmax(utilities)
     return node.childs[collect(keys(node.childs))[ind]]
@@ -38,11 +38,11 @@ function expand!(node::MCTS_node,NN)
     else
         w,h,c=size(node.G.B)
         pi,v=NN(reshape(current_perspective(node.G)+randn(Float32,w,h,c)/2048,w,h,c,1))
-        node.V = v[1]
+        node.V = typeof(v[1])==Tracker.TrackedReal{Float32} ? v[1].data : v[1]
         for i in valid_moves(node.G)
             tmp=deepcopy(node.G)
             play_move!(tmp,i)
-            node.childs[i]=MCTS_node(tmp,p=pi[i])
+            node.childs[i]=MCTS_node(tmp,p=typeof(v[1])==Tracker.TrackedReal{Float32} ? pi[i].data : pi[i])
         end
     end
 end
