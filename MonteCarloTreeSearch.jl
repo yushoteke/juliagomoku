@@ -27,7 +27,7 @@ function print_childs(node::MCTS_node)
 end
 
 function sample_child(node::MCTS_node,c=1.0)
-    utilities = map(x->x.Q+c*x.p*sqrt(node.N/(1+x.N)),values(node.childs))
+    utilities = map(x->x.Q+c*x.p*sqrt(node.N)/(1+x.N),values(node.childs))
     val,ind=findmax(utilities)
     return node.childs[collect(keys(node.childs))[ind]]
 end
@@ -67,7 +67,7 @@ function simulation(node::MCTS_node,NN)
     return -v
 end
 
-function get_stronger_pi(G::gomoku,NN,sim_num::Int64=100,t=1.0)
+function get_stronger_pi(G::gomoku,NN,sim_num::Int64=100,t=4.0)
     node = MCTS_node(G)
     for i=1:sim_num
         simulation(node,NN)

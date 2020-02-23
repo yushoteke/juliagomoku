@@ -27,7 +27,7 @@ body2=Chain(Conv((3,3),2=>32,pad=(1,1),leakyrelu),
             Conv((3,3),32=>64,pad=(1,1),leakyrelu),
             Conv((3,3),64=>64,pad=(1,1),leakyrelu),
             Conv((3,3),64=>64,pad=(1,1),leakyrelu),
-            x->reshape(x,:,b),
+            x->reshape(x,:,size(x,4)),
             Dense(64*w*h,512,leakyrelu))
 head21=Dense(512,w*h,sigmoid)
 head22=Dense(512,1,tanh)
@@ -36,4 +36,26 @@ function NN2(x::Array{Float32,4})
     w,h,c,b=size(x)
     temp=body2(x)
     return reshape(head21(temp),w,h,1,b),reshape(head22(temp),1,1,1,b)
+end
+
+struct player
+    body
+    head1
+    head2
+end
+
+Flux.@treelike player
+
+player(n)=player(Chain(Conv((3,3),2=>32,pad=(1,1),leakyrelu),
+                Conv((3,3),32=>64,pad=(1,1),leakyrelu),
+                Conv((3,3),64=>64,pad=(1,1),leakyrelu),
+                Conv((3,3),64=>64,pad=(1,1),leakyrelu),
+                x->reshape(x,:,size(x,4)),
+                Dense(64*n*n,512,leakyrelu)),Dense(512,n*n,sigmoid),Dense(512,1,tanh))
+
+
+function (p::player)(x)
+    w,h,c,b=size(x)
+    tmp=p.body(x)
+    return reshape(p.head1(tmp),w,h,1,b),reshape(p.head2(tmp),1,1,1,b)
 end
