@@ -9,14 +9,14 @@ end
 
 Flux.@treelike player
 
-function player(n;type="conv")
+function player(n;type="res")
     if type=="conv"
         return player(Chain(Conv((3,3),2=>32,pad=(1,1),leakyrelu),
                         Conv((3,3),32=>64,pad=(1,1),leakyrelu),
                         Conv((3,3),64=>64,pad=(1,1),leakyrelu),
                         Conv((3,3),64=>64,pad=(1,1),leakyrelu),
                         x->reshape(x,:,size(x,4)),
-                        Dense(64*n*n,512,leakyrelu)),Dense(512,n*n,sigmoid),Dense(512,1,tanh))
+                        Dense(64*n*n,512,leakyrelu)),Chain(Dense(512,n*n),softmax),Dense(512,1,tanh))
     elseif type=="res"
         return player(Chain(Conv((3,3),2=>128,pad=(1,1),gelu),
                             ResidualBlock(128),
@@ -28,10 +28,13 @@ function player(n;type="conv")
                             BatchNorm(4),
                             x->gelu.(x),
                             x->reshape(x,:,size(x,4))),
-                            Dense(4*n*n,n*n,sigmoid),
+                            Chain(Dense(4*n*n,n*n),softmax),
                             Chain(Dense(4*n*n,n*n,gelu),Dense(n*n,1,tanh)))
     end
 end
+
+gpu_player(p::player)=typeof(p.head1.layers[1].W.data)==CuArray{Float32,2}
+player_length(p::player)=isqrt(size(p.head1.layers[1].W,1))
 
 function (p::player)(x)
     w,h,c,b=size(x)

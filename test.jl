@@ -1,5 +1,5 @@
 include("MonteCarloTreeSearch.jl")
-
+include("gomokunet.jl")
 #nearly terminal case
 G=gomoku(3,2)
 n=MCTS_node(G)
@@ -31,7 +31,7 @@ for i=1:5
 end
 
 
-G=gomoku(5,3)
+G=gomoku(5,3)player
 node=MCTS_node(G)
 for i=1:100
     simulation(node,NN)
@@ -44,4 +44,14 @@ else
         PI[i]=node.childs[i].N
     end
     PI/=sum(PI)
+end
+
+p1=player(19,type="res")
+p2=player(19,type="res")|>gpu
+function compare_times()
+    d1=rand(19,19,2,1)
+    d2=cu(d1)
+
+    @time p1(d1)
+    @time p2(d2)
 end

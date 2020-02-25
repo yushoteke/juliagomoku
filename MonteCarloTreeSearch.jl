@@ -32,12 +32,14 @@ function sample_child(node::MCTS_node,c=1.0)
     return node.childs[collect(keys(node.childs))[ind]]
 end
 
-function expand!(node::MCTS_node,NN)
+function expand!(node::MCTS_node,player)
     if node.G.is_terminal
-        node.V = -1
+        node.V = sum(node.G.B)==node.G.L^2 ? 0.0 : -1.0
     else
         w,h,c=size(node.G.B)
-        pi,v=NN(reshape(current_perspective(node.G)+randn(Float32,w,h,c)/2048,w,h,c,1))
+        input=reshape(current_perspective(node.G)+randn(Float32,w,h,c)/2048,w,h,c,1)
+        pi,v = gpu_player(player) ? player(cu(input))|>cpu : player(input)
+        #pi,v=player(reshape(current_perspective(node.G)+randn(Float32,w,h,c)/2048,w,h,c,1))
         node.V = typeof(v[1])==Tracker.TrackedReal{Float32} ? v[1].data : v[1]
         for i in valid_moves(node.G)
             tmp=deepcopy(node.G)
@@ -53,26 +55,26 @@ function update_edge(node::MCTS_node,v::Float32)
     node.Q = node.W / node.N
 end
 
-function simulation(node::MCTS_node,NN)
+function simulation(node::MCTS_node,player)
     if node.is_leaf
-        expand!(node,NN)
+        expand!(node,player)
         if !node.G.is_terminal
             node.is_leaf=false
         end
         v = node.V
     else
-        v = simulation(sample_child(node),NN)
+        v = simulation(sample_child(node),player)
     end
     update_edge(node,v)
     return -v
 end
 
-function get_stronger_pi(G::gomoku,NN,sim_num::Int64=100,t=4.0)
+function get_stronger_pi(G::gomoku,player,sim_num::Int64=250,t=4.0)
     node = MCTS_node(G)
     for i=1:sim_num
-        simulation(node,NN)
+        simulation(node,player)
     end
-    PI=zeros(Float32,5,5)
+    PI=zeros(Float32,G.L,G.L)
     if G.is_terminal
         return PI
     else

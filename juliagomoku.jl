@@ -66,5 +66,6 @@ function terminal_check(G::gomoku,m::CartesianIndex{2})
     return Nconsecutive(horizontal,G.n_in_row) ||
             Nconsecutive(vertical,G.n_in_row) ||
             Nconsecutive(ldiagonal,G.n_in_row) ||
-            Nconsecutive(rdiagonal,G.n_in_row)
+            Nconsecutive(rdiagonal,G.n_in_row) ||
+            sum(G.B)==G.L*G.L   #test if no moves left
 end
